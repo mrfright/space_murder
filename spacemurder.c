@@ -30,16 +30,35 @@ int main() {
 
     Surface = SDL_GetWindowSurface(Window);
 
-    CraftSurface = SDL_LoadBMP("spacemurdercraft.bmp");
-    if(NULL == CraftSurface) {
+    {
+    SDL_Surface *UnoptimizedCraftSurface = NULL;
+    UnoptimizedCraftSurface = SDL_LoadBMP("spacemurdercraft.bmp");
+    if(NULL == UnoptimizedCraftSurface) {
         printf("Could not laod spacemurdercraft.bmp: %s\n", SDL_GetError());
         return -1;
     }
+
+    CraftSurface = SDL_ConvertSurface(UnoptimizedCraftSurface, Surface->format, 0);
+    if(NULL == CraftSurface) {
+        printf("Unable to optimize image: %s\n", SDL_GetError());
+        return -1;
+    }
     
+    SDL_FreeSurface(UnoptimizedCraftSurface);
+    }
     
-    SDL_BlitSurface(CraftSurface, NULL, Surface, NULL);
-    SDL_UpdateWindowSurface(Window);
-    SDL_Delay(2000);
+    int keep_going = 1;
+    SDL_Event Event;
+
+    while(keep_going) {
+        while(SDL_PollEvent(&Event) != 0) {
+            if(Event.type == SDL_QUIT) {
+                keep_going = 0;
+            }
+        }
+        SDL_BlitSurface(CraftSurface, NULL, Surface, NULL);
+        SDL_UpdateWindowSurface(Window);
+    }
     
     return 0;
 }
