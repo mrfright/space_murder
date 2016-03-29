@@ -9,6 +9,7 @@
 int main() {
     SDL_Window *Window = NULL;
     SDL_Surface *Surface = NULL;
+    SDL_Surface *CraftSurface = NULL;
 
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
         printf("SDL could not initialize: %s\n", SDL_GetError());
@@ -26,9 +27,17 @@ int main() {
         printf("Window could not be created: %s\n", SDL_GetError());
         return -1;
     }
-    
+
     Surface = SDL_GetWindowSurface(Window);
-    SDL_FillRect(Surface, NULL, SDL_MapRGB(Surface->format, 0xFF, 0xFF, 0xFF));
+
+    CraftSurface = SDL_LoadBMP("spacemurdercraft.bmp");
+    if(NULL == CraftSurface) {
+        printf("Could not laod spacemurdercraft.bmp: %s\n", SDL_GetError());
+        return -1;
+    }
+    
+    
+    SDL_BlitSurface(CraftSurface, NULL, Surface, NULL);
     SDL_UpdateWindowSurface(Window);
     SDL_Delay(2000);
     
