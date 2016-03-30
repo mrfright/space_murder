@@ -1,4 +1,7 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
 //for unix
 
 #include <stdio.h>
@@ -28,11 +31,17 @@ int main() {
         return -1;
     }
 
+    int imgFlags = IMG_INIT_PNG;
+    if(!(IMG_Init(imgFlags) & imgFlags)) {
+        printf("SDL_image cuold not initialize: %s\n", IMG_GetError());
+        return -1;
+    }
+
     Surface = SDL_GetWindowSurface(Window);
 
     {
     SDL_Surface *UnoptimizedCraftSurface = NULL;
-    UnoptimizedCraftSurface = SDL_LoadBMP("spacemurdercraft.bmp");
+    UnoptimizedCraftSurface = IMG_Load("spacemurdercraft.png");
     if(NULL == UnoptimizedCraftSurface) {
         printf("Could not laod spacemurdercraft.bmp: %s\n", SDL_GetError());
         return -1;
