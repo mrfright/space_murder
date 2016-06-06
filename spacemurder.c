@@ -27,6 +27,13 @@ int main() {
     SDL_Texture *CraftTexture = NULL;
     SDL_Renderer *WindowRenderer = NULL;
 
+    int CraftTextureWidth;
+    int CraftTextureHeight;
+    int CraftTextureX = 0;
+    int CraftTextureY = 0;
+    int CraftTextureXvel = 0;
+    int CraftTextureYvel = 0;
+
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
         printf("SDL could not initialize: %s\n", SDL_GetError());
         return -1;
@@ -48,13 +55,13 @@ int main() {
         return -1;
     }
 
-    WindowRenderer = SDL_CreateRenderer(Window, -1, SDL_RENDERER_ACCELERATED);
+    WindowRenderer = SDL_CreateRenderer(Window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if(NULL == WindowRenderer) {
         printf("Renderer could not be created: %s\n", SDL_GetError());
         return -1;
     }
 
-    SDL_SetRenderDrawColor(WindowRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+    SDL_SetRenderDrawColor(WindowRenderer, 0, 0, 0, 0xFF);
 
     int imgFlags = IMG_INIT_PNG;
     if(!(IMG_Init(imgFlags) & imgFlags)) {
@@ -69,11 +76,16 @@ int main() {
         return -1;
     }
 
+    SDL_SetColorKey(loadedCraftSurface, SDL_TRUE, SDL_MapRGB(loadedCraftSurface->format, 0, 0xFF, 0xFF));
+
     CraftTexture = SDL_CreateTextureFromSurface(WindowRenderer, loadedCraftSurface);
     if(NULL == CraftTexture) {
         printf("Unable to create texture from surface: %s\n", SDL_GetError());
         return -1;
     }
+
+    CraftTextureWidth = loadedCraftSurface->w;
+    CraftTextureHeight = loadedCraftSurface->h;
     
     SDL_FreeSurface(loadedCraftSurface);
     }
@@ -86,9 +98,40 @@ int main() {
             if(Event.type == SDL_QUIT) {
                 keep_going = 0;
             }
+            else if(Event.type == SDL_KEYDOWN && Event.key.repeat == 0) {
+                switch(Event.key.keysym.sym) {
+                    case SDLK_UP: CraftTextureYvel -= 4; break;
+                    case SDLK_DOWN: CraftTextureYvel += 4; break;
+                    case SDLK_LEFT: CraftTextureXvel -= 4; break;
+                    case SDLK_RIGHT: CraftTextureXvel += 4; break;
+                }
+            }
+            //If a key was released
+            else if(Event.type == SDL_KEYUP && Event.key.repeat == 0) {
+                //Adjust the velocity
+                switch(Event.key.keysym.sym) {
+                    case SDLK_UP: CraftTextureYvel += 4; break;
+                    case SDLK_DOWN: CraftTextureYvel -= 4; break;
+                    case SDLK_LEFT: CraftTextureXvel += 4; break;
+                    case SDLK_RIGHT: CraftTextureXvel -= 4; break;
+                }
+            }
         }
+        
         SDL_RenderClear(WindowRenderer);
-        SDL_RenderCopy(WindowRenderer, CraftTexture, NULL, NULL);
+        
+        CraftTextureX += CraftTextureXvel;        
+        CraftTextureY += CraftTextureYvel;
+        printf("%d %d\n", CraftTextureXvel, CraftTextureYvel);
+
+        SDL_Rect renderQuad = {
+                                  CraftTextureX,
+                                  CraftTextureY,
+                                  CraftTextureWidth,
+                                  CraftTextureHeight
+                              };
+        
+        SDL_RenderCopy(WindowRenderer, CraftTexture, NULL, &renderQuad);
         SDL_RenderPresent(WindowRenderer);
     }
     
