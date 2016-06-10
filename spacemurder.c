@@ -11,8 +11,6 @@
 
 int main() {
     SDL_Window *Window = NULL;
-    //SDL_Surface *Surface = NULL;
-    //SDL_Surface *CraftSurface = NULL;
     SDL_Texture *CraftTexture = NULL;
     SDL_Renderer *WindowRenderer = NULL;
 
@@ -59,24 +57,24 @@ int main() {
     }
 
     {
-    SDL_Surface *loadedCraftSurface = IMG_Load("spacemurdercraft.png");
-    if(NULL == loadedCraftSurface) {
-        printf("Could not laod spacemurdercraft.png: %s\n", SDL_GetError());
-        return -1;
-    }
+        SDL_Surface *loadedCraftSurface = IMG_Load("spacemurdercraft.png");
+        if(NULL == loadedCraftSurface) {
+            printf("Could not laod spacemurdercraft.png: %s\n", SDL_GetError());
+            return -1;
+        }
 
-    SDL_SetColorKey(loadedCraftSurface, SDL_TRUE, SDL_MapRGB(loadedCraftSurface->format, 0, 0xFF, 0xFF));
+        SDL_SetColorKey(loadedCraftSurface, SDL_TRUE, SDL_MapRGB(loadedCraftSurface->format, 0, 0xFF, 0xFF));
 
-    CraftTexture = SDL_CreateTextureFromSurface(WindowRenderer, loadedCraftSurface);
-    if(NULL == CraftTexture) {
-        printf("Unable to create texture from surface: %s\n", SDL_GetError());
-        return -1;
-    }
+        CraftTexture = SDL_CreateTextureFromSurface(WindowRenderer, loadedCraftSurface);
+        if(NULL == CraftTexture) {
+            printf("Unable to create texture from surface: %s\n", SDL_GetError());
+            return -1;
+        }
 
-    CraftTextureWidth = loadedCraftSurface->w;
-    CraftTextureHeight = loadedCraftSurface->h;
+        CraftTextureWidth = loadedCraftSurface->w;
+        CraftTextureHeight = loadedCraftSurface->h;
     
-    SDL_FreeSurface(loadedCraftSurface);
+        SDL_FreeSurface(loadedCraftSurface);
     }
     
     int keep_going = 1;
@@ -108,10 +106,16 @@ int main() {
         }
         
         SDL_RenderClear(WindowRenderer);
-        
-        CraftTextureX += CraftTextureXvel;        
-        CraftTextureY += CraftTextureYvel;
-        printf("%d %d\n", CraftTextureXvel, CraftTextureYvel);
+
+        if(CraftTextureX + CraftTextureXvel >= 0 &&
+           CraftTextureX + CraftTextureXvel + CraftTextureWidth <= SCREEN_WIDTH) {
+            CraftTextureX += CraftTextureXvel;
+        }
+
+        if(CraftTextureY + CraftTextureYvel >= 0 &&
+           CraftTextureY + CraftTextureYvel + CraftTextureHeight <= SCREEN_HEIGHT) {
+            CraftTextureY += CraftTextureYvel;
+        }
 
         SDL_Rect renderQuad = {
                                   CraftTextureX,
