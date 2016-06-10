@@ -15,13 +15,13 @@
 *.lo
 
 # Shared objects (inc. Windows DLLs)
-*.dll
+#*.dll
 *.so
 *.so.*
 *.dylib
 
 # Executables
-*.exe
+#*.exe
 *.out
 *.app
 *.i*86
@@ -31,4 +31,4 @@
 # Debug files
 *.dSYM/
 
-spacemurder
+#spacemurder
