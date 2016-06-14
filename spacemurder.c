@@ -87,7 +87,7 @@ struct BulletSprite CreatePlayerBulletSprite(struct Sprite *player,
     bullet.sprite = CreateSprite(bulletfilename, 0, 0, 0,
                                  Renderer, 0, SCREEN_WIDTH, 0, SCREEN_HEIGHT);
 
-    bullet.sprite.TextureX = player->TextureX;
+    bullet.sprite.TextureX = player->TextureX + player->TextureWidth;
     bullet.sprite.TextureY = player->TextureY;
 
     return bullet;
@@ -169,6 +169,8 @@ int main() {
     int keep_going = 1;
     SDL_Event Event;
 
+    int ticks = 0;
+
     while(keep_going) {
         while(SDL_PollEvent(&Event) != 0) {
             if(Event.type == SDL_QUIT) {
@@ -181,10 +183,11 @@ int main() {
                     case SDLK_LEFT: CraftSprite.TextureXvel -= 4; break;
                     case SDLK_RIGHT: CraftSprite.TextureXvel += 4; break;
                     case SDLK_SPACE:
-                        if(BulletCount < MAX_BULLETS) {
+                        if(BulletCount < MAX_BULLETS && SDL_GetTicks() - ticks >= 100) {
                             Bullets[BulletCount++] =
                                 CreatePlayerBulletSprite(&CraftSprite,
                                                          WindowRenderer);
+                            ticks = SDL_GetTicks();
                         }
                 }
             }
@@ -206,7 +209,20 @@ int main() {
 
         int currentbullet;
         for(currentbullet = 0; currentbullet < BulletCount; ++currentbullet) {
-            RenderSprite(&(Bullets[currentbullet].sprite), WindowRenderer);
+            //if bullet not out of bounds, render, move
+            if(Bullets[currentbullet].sprite.TextureX < SCREEN_WIDTH + 150) {//beyond where enemies could spawn
+                
+                RenderSprite(&(Bullets[currentbullet].sprite), WindowRenderer);
+                Bullets[currentbullet].sprite.TextureX += Bullets[currentbullet].sprite.TextureWidth;
+            }
+            else {
+                SDL_DestroyTexture(Bullets[currentbullet].sprite.Texture);
+                Bullets[currentbullet] = Bullets[BulletCount-1];
+                --currentbullet;
+                --BulletCount;
+            }
+            //else, delete by moving bullet at end here, decrement total count,
+            //decrement current index so loop comes back to this index
         }
 
         SDL_RenderPresent(WindowRenderer);
