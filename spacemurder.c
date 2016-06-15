@@ -12,10 +12,13 @@
 //#include "SDL_win\SDL_image.h"
 
 #include <stdio.h>
+#include <time.h> //for time to seed rand
+#include <stdlib.h> //for rand
 
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
 #define MAX_BULLETS 100
+#define MAX_ENEMIES 100
 
 struct Sprite {
     SDL_Texture *Texture;
@@ -85,14 +88,21 @@ struct BulletSprite CreatePlayerBulletSprite(struct Sprite *player,
     bullet.EnemyBullet = 0;
     char bulletfilename[] = "spacemurderbullet.png";
     bullet.sprite = CreateSprite(bulletfilename, 0, 0, 0,
-                                 Renderer, 0, SCREEN_WIDTH, 0, SCREEN_HEIGHT);
+                                 Renderer, 0, SCREEN_WIDTH + 200, 0, SCREEN_HEIGHT + 200);
 
-    bullet.sprite.TextureX = player->TextureX + player->TextureWidth;
-    bullet.sprite.TextureY = player->TextureY;
+    bullet.sprite.TextureX = player->TextureX
+                           + player->TextureWidth
+                           - bullet.sprite.TextureWidth
+                           + player->TextureXvel;
+    
+    bullet.sprite.TextureY = player->TextureY + player->TextureYvel;
+    bullet.sprite.TextureXvel = bullet.sprite.TextureWidth;//positive for the player
 
     return bullet;
 }
 
+//should be renamed update since actually moves them and renders
+//or split out those functinality?
 void RenderSprite(struct Sprite *sprite, SDL_Renderer *Renderer) {
     if(sprite->TextureX + sprite->TextureXvel >= sprite->TextureMinX &&
        sprite->TextureX + sprite->TextureXvel + sprite->TextureWidth <= sprite->TextureMaxX) {
@@ -125,7 +135,15 @@ int main() {
     SDL_Renderer *WindowRenderer = NULL;
     struct Sprite CraftSprite;
     struct BulletSprite Bullets[MAX_BULLETS];
-    int BulletCount = 0;    
+    int BulletCount = 0;
+
+    struct Sprite EnemySprites[MAX_ENEMIES];
+    int EnemyCount = 0;
+    char enemyfilename[] = "spacemurderpolyp.png";
+
+    int Aggression = 0;
+
+    srand(time(NULL));
     
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
         printf("SDL could not initialize: %s\n", SDL_GetError());
@@ -169,7 +187,8 @@ int main() {
     int keep_going = 1;
     SDL_Event Event;
 
-    int ticks = 0;
+    int bulletticks = 0;
+    int enemyticks = 0;
 
     while(keep_going) {
         while(SDL_PollEvent(&Event) != 0) {
@@ -183,11 +202,11 @@ int main() {
                     case SDLK_LEFT: CraftSprite.TextureXvel -= 4; break;
                     case SDLK_RIGHT: CraftSprite.TextureXvel += 4; break;
                     case SDLK_SPACE:
-                        if(BulletCount < MAX_BULLETS && SDL_GetTicks() - ticks >= 100) {
+                        if(BulletCount < MAX_BULLETS && SDL_GetTicks() - bulletticks >= 100) {
                             Bullets[BulletCount++] =
                                 CreatePlayerBulletSprite(&CraftSprite,
                                                          WindowRenderer);
-                            ticks = SDL_GetTicks();
+                            bulletticks = SDL_GetTicks();
                         }
                 }
             }
@@ -205,18 +224,23 @@ int main() {
         
         SDL_RenderClear(WindowRenderer);
 
-        RenderSprite(&CraftSprite, WindowRenderer);
+        
 
+        //player bullets
         int currentbullet;
         for(currentbullet = 0; currentbullet < BulletCount; ++currentbullet) {
             //if bullet not out of bounds, render, move
             if(Bullets[currentbullet].sprite.TextureX < SCREEN_WIDTH + 150) {//beyond where enemies could spawn
                 
                 RenderSprite(&(Bullets[currentbullet].sprite), WindowRenderer);
-                Bullets[currentbullet].sprite.TextureX += Bullets[currentbullet].sprite.TextureWidth;
+                //Bullets[currentbullet].sprite.TextureX += Bullets[currentbullet].sprite.TextureWidth;
             }
             else {
                 SDL_DestroyTexture(Bullets[currentbullet].sprite.Texture);
+
+                //what if the bullet being destroyed is the last one?
+                //make sense set last one to itself?
+                //maybe doesn't matter
                 Bullets[currentbullet] = Bullets[BulletCount-1];
                 --currentbullet;
                 --BulletCount;
@@ -225,6 +249,38 @@ int main() {
             //decrement current index so loop comes back to this index
         }
 
+        //enemies
+        //spawn enemies
+        if(SDL_GetTicks() - enemyticks > 1000 && EnemyCount < MAX_ENEMIES) {
+            EnemySprites[EnemyCount] = CreateSprite(enemyfilename, 0x00, 0xFF, 0xFF,
+                                           WindowRenderer, -200, SCREEN_WIDTH+200, 0, SCREEN_HEIGHT);
+            EnemySprites[EnemyCount].TextureXvel = -1;
+            EnemySprites[EnemyCount].TextureX = SCREEN_WIDTH + 100;
+            ++EnemyCount;
+            enemyticks = SDL_GetTicks();
+        }
+        
+        
+
+        //update enemies; fire, move, collision with player bullets, render
+        int currentenemy;
+        for(currentenemy = 0; currentenemy < EnemyCount; ++currentenemy) {
+            if(EnemySprites[currentenemy].TextureX > -100) {
+                RenderSprite(&EnemySprites[currentenemy], WindowRenderer);                
+            }
+            else {
+                SDL_DestroyTexture(EnemySprites[currentenemy].Texture);
+
+                //similar to bullets, may not matter if last enemy is
+                //the one being destroyed then setting to itself
+                EnemySprites[currentenemy] = EnemySprites[EnemyCount-1];
+                --currentenemy;
+                --EnemyCount;
+            }
+        }
+
+        RenderSprite(&CraftSprite, WindowRenderer);
+        
         SDL_RenderPresent(WindowRenderer);
     }
     
