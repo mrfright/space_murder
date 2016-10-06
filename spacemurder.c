@@ -1,15 +1,16 @@
-
+#ifdef LINUX
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
 //#include <SDL2/SDL_ttf.h>
 //#include <SDL2/SDL_mixer.h>
-//for unix
+#endif
 
 
-//for windows
-//#include "SDL_win\SDL.h"
-//#include "SDL_win\SDL_image.h"
+#ifdef WINDOWS
+#include "SDL_win\SDL.h"
+#include "SDL_win\SDL_image.h"
+#endif
 
 #include <stdio.h>
 #include <time.h> //for time to seed rand
