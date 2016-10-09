@@ -6,7 +6,6 @@
 //#include <SDL2/SDL_mixer.h>
 #endif
 
-
 #ifdef WINDOWS
 #include "SDL_win\SDL.h"
 #include "SDL_win\SDL_image.h"
@@ -100,6 +99,45 @@ struct BulletSprite CreatePlayerBulletSprite(struct Sprite *player,
     bullet.sprite.TextureXvel = bullet.sprite.TextureWidth;//positive for the player
 
     return bullet;
+}
+
+//decide if sprites are colliding with simply if their bounding
+//boxes intersect.
+int SpriteCollide(struct Sprite *firstSprite, struct Sprite *secondSprite) {
+    return
+        //Xs overlap
+        (
+            //x1 less
+            (
+                secondSprite->TextureX >= firstSprite->TextureX
+                &&
+                secondSprite->TextureX <= firstSprite->TextureX + firstSprite->TextureWidth - 1
+            )
+            ||
+            //x2 less
+            (
+                firstSprite->TextureX >= secondSprite->TextureX
+                &&
+                firstSprite->TextureX <= secondSprite->TextureX + secondSprite->TextureWidth - 1
+            )
+        )
+            &&
+        //Ys overlap
+        (
+            //y1 less
+            (
+                secondSprite->TextureY >= firstSprite->TextureY
+                &&
+                secondSprite->TextureY <= firstSprite->TextureY + firstSprite->TextureHeight - 1
+            )
+            ||
+            //y2 less
+            (
+                firstSprite->TextureY >= secondSprite->TextureY
+                &&
+                firstSprite->TextureY <= secondSprite->TextureY + secondSprite->TextureHeight - 1
+            )
+         );
 }
 
 //should be renamed update since actually moves them and renders
@@ -225,8 +263,6 @@ int main() {
         
         SDL_RenderClear(WindowRenderer);
 
-        
-
         //player bullets
         int currentbullet;
         for(currentbullet = 0; currentbullet < BulletCount; ++currentbullet) {
@@ -260,8 +296,6 @@ int main() {
             ++EnemyCount;
             enemyticks = SDL_GetTicks();
         }
-        
-        
 
         //update enemies; fire, move, collision with player bullets, render
         int currentenemy;
@@ -278,8 +312,23 @@ int main() {
                 --currentenemy;
                 --EnemyCount;
             }
-        }
 
+            currentbullet = 0;
+            for(currentbullet = 0; currentbullet < BulletCount; ++currentbullet) {
+                if(SpriteCollide(&Bullets[currentbullet].sprite , &EnemySprites[currentenemy])) {
+                    SDL_DestroyTexture(Bullets[currentbullet].sprite.Texture);
+                    Bullets[currentbullet] = Bullets[BulletCount-1];
+                    --currentbullet;
+                    --BulletCount;
+
+                    SDL_DestroyTexture(EnemySprites[currentenemy].Texture);
+                    EnemySprites[currentenemy] = EnemySprites[EnemyCount-1];
+                    --currentenemy;
+                    --EnemyCount;
+                }
+            }
+        }
+        
         RenderSprite(&CraftSprite, WindowRenderer);
         
         SDL_RenderPresent(WindowRenderer);
