@@ -229,6 +229,9 @@ int main() {
     int bulletticks = 0;
     int enemyticks = 0;
 
+    int EnemyLevel = 10;
+    int EnemySpawnLevel = 1000;
+
     while(keep_going) {
         while(SDL_PollEvent(&Event) != 0) {
             if(Event.type == SDL_QUIT) {
@@ -288,11 +291,17 @@ int main() {
 
         //enemies
         //spawn enemies
-        if(SDL_GetTicks() - enemyticks > 1000 && EnemyCount < MAX_ENEMIES) {
+        if(SDL_GetTicks() - enemyticks > EnemySpawnLevel
+           && EnemyCount < EnemyLevel
+           && EnemyLevel <= MAX_ENEMIES) {
             EnemySprites[EnemyCount] = CreateSprite(enemyfilename, 0x00, 0xFF, 0xFF,
                                            WindowRenderer, -200, SCREEN_WIDTH+200, 0, SCREEN_HEIGHT);
             EnemySprites[EnemyCount].TextureXvel = -1;
             EnemySprites[EnemyCount].TextureX = SCREEN_WIDTH + 100;
+
+            //enemy y random value from 0 to SCREEN_HEIGHT
+            EnemySprites[EnemyCount].TextureY = rand()%SCREEN_HEIGHT;
+            
             ++EnemyCount;
             enemyticks = SDL_GetTicks();
         }
